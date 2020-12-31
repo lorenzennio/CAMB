@@ -89,6 +89,10 @@
             ((1+this%w_lam < -1.e-6_dl) .or. 1+this%w_lam + this%wa < -1.e-6_dl)) then
             error stop 'Fluid dark energy model does not allow w crossing -1'
         end if
+        if (this%use_tabulated_cs2) then
+            if (any(this%sound_speed%F<0)) &
+                error stop 'Fluid dark energy model does not allow cs2 crossing 0'
+        endif
         this%num_perturb_equations = 2
     end if
 
@@ -121,10 +125,19 @@
     real(dl), intent(in) :: a, adotoa, w, k, z, y(:)
     integer, intent(in) :: w_ix
     real(dl) Hv3_over_k, loga
+    real(dl) :: cs2
+
+    if (this%use_tabulated_cs2) then
+      cs2 = this%cs2_de(a)
+      !print *, this%cs2_de(a)
+      !error stop 'HI (:'
+    else
+      cs2 = this%cs2_lam
+    end if
 
     Hv3_over_k =  3*adotoa* y(w_ix + 1) / k
     !density perturbation
-    ayprime(w_ix) = -3 * adotoa * (this%cs2_lam - w) *  (y(w_ix) + (1 + w) * Hv3_over_k) &
+    ayprime(w_ix) = -3 * adotoa * (cs2 - w) *  (y(w_ix) + (1 + w) * Hv3_over_k) &
         -  (1 + w) * k * y(w_ix + 1) - (1 + w) * k * z
     if (this%use_tabulated_w) then
         !account for derivatives of w
@@ -137,8 +150,8 @@
     end if
     !velocity
     if (abs(w+1) > 1e-6) then
-        ayprime(w_ix + 1) = -adotoa * (1 - 3 * this%cs2_lam) * y(w_ix + 1) + &
-            k * this%cs2_lam * y(w_ix) / (1 + w)
+        ayprime(w_ix + 1) = -adotoa * (1 - 3 * cs2) * y(w_ix + 1) + &
+            k * cs2 * y(w_ix) / (1 + w)
     else
         ayprime(w_ix + 1) = 0
     end if

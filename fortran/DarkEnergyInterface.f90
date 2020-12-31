@@ -21,6 +21,7 @@
     procedure :: w_de
     procedure :: grho_de
     procedure :: Effective_w_wa !Used as approximate values for non-linear corrections
+    procedure :: cs2_de
     end type TDarkEnergyModel
 
     type, extends(TDarkEnergyModel) :: TDarkEnergyEqnOfState
@@ -29,9 +30,10 @@
         real(dl) :: wa = 0._dl !may not be used, just for compatibility with e.g. halofit
         real(dl) :: cs2_lam = 1_dl !rest-frame sound speed, though may not be used
         logical :: use_tabulated_w = .false.  !Use interpolated table; note this is quite slow.
+        logical :: use_tabulated_cs2 = .false.  !Use interpolated table; note this is quite slow.
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
         !Interpolations if use_tabulated_w=.true.
-        Type(TCubicSpline) :: equation_of_state, logdensity
+        Type(TCubicSpline) :: equation_of_state, sound_speed, logdensity
     contains
     procedure :: ReadParams => TDarkEnergyEqnOfState_ReadParams
     procedure :: Init => TDarkEnergyEqnOfState_Init
@@ -40,6 +42,8 @@
     procedure :: w_de => TDarkEnergyEqnOfState_w_de
     procedure :: grho_de => TDarkEnergyEqnOfState_grho_de
     procedure :: Effective_w_wa => TDarkEnergyEqnOfState_Effective_w_wa
+    procedure :: cs2_de => TDarkEnergyEqnOfState_cs2_de
+    procedure :: Setcs2Table => TDarkEnergyEqnOfState_Setcs2Table
     end type TDarkEnergyEqnOfState
 
     public TDarkEnergyModel, TDarkEnergyEqnOfState
@@ -53,6 +57,15 @@
     w_de = -1._dl
 
     end function w_de  ! equation of state of the PPF DE
+
+    function cs2_de(this, a)
+    class(TDarkEnergyModel) :: this
+    real(dl) :: cs2_de, al
+    real(dl), intent(IN) :: a
+
+    cs2_de = 1._dl
+
+    end function cs2_de  ! sound speed of the PPF DE
 
     function grho_de(this, a)  !relative density (8 pi G a^4 rho_de /grhov)
     class(TDarkEnergyModel) :: this
@@ -180,6 +193,20 @@
 
     end subroutine TDarkEnergyEqnOfState_SetwTable
 
+    subroutine TDarkEnergyEqnOfState_Setcs2Table(this, a, cs2, n)
+    class(TDarkEnergyEqnOfState) :: this
+    integer, intent(in) :: n
+    real(dl), intent(in) :: a(n), cs2(n)
+
+    if (abs(a(size(a)) -1) > 1e-5) error stop 'cs2 table must end at a=1'
+
+    this%use_tabulated_cs2 = .true.
+    call this%sound_speed%Init(log(a), cs2)
+
+    !this%cs2_lam = cs2(size(a))
+
+    end subroutine TDarkEnergyEqnOfState_Setcs2Table
+
 
     function TDarkEnergyEqnOfState_w_de(this, a)
     class(TDarkEnergyEqnOfState) :: this
@@ -200,6 +227,26 @@
     endif
 
     end function TDarkEnergyEqnOfState_w_de  ! equation of state of the PPF DE
+
+    function TDarkEnergyEqnOfState_cs2_de(this, a)
+    class(TDarkEnergyEqnOfState) :: this
+    real(dl) :: TDarkEnergyEqnOfState_cs2_de, al
+    real(dl), intent(IN) :: a
+
+    if(.not. this%use_tabulated_cs2) then
+        TDarkEnergyEqnOfState_cs2_de= this%cs2_lam
+    else
+        al=dlog(a)
+        if(al <= this%sound_speed%Xmin_interp) then
+            TDarkEnergyEqnOfState_cs2_de= this%sound_speed%F(1)
+        elseif(al >= this%sound_speed%Xmax_interp) then
+            TDarkEnergyEqnOfState_cs2_de= this%sound_speed%F(this%sound_speed%n)
+        else
+            TDarkEnergyEqnOfState_cs2_de = this%sound_speed%Value(al)
+        endif
+    endif
+
+  end function TDarkEnergyEqnOfState_cs2_de  ! equation of state of the PPF DE
 
 
     subroutine TDarkEnergyEqnOfState_Effective_w_wa(this, w, wa)

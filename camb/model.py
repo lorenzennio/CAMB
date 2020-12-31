@@ -611,6 +611,22 @@ class CAMBparams(F2003Class):
         self.DarkEnergy.set_w_a_table(a, w)
         return self
 
+    #def set_dark_energy_cs2_a(self, a, cs2, dark_energy_model='fluid'):
+    #    """
+    #    Set the dark energy sound speed from tabulated values (which are cubic spline interpolated).
+
+    #    :param a: array of sampled a = 1/(1+z) values
+    #    :param w: array of cs2(a)
+    #    :param dark_energy_model:  model to use ('fluid' or 'ppf'), default is 'fluid'
+    #    :return: self
+    #    """
+    #    if dark_energy_model == 'fluid' and np.any(cs2 < 0):
+    #        raise CAMBError('fluid dark energy model does not support cs2 crossing 0')
+    #    self.DarkEnergy = self.make_class_named(dark_energy_model, DarkEnergyEqnOfState)
+    #    # Note that assigning to allocatable fields makes deep copies of the object
+    #    self.DarkEnergy.set_cs2_a_table(a, cs2)
+    #    return self
+
     def get_zre(self):
         return self.Reion.get_zre(self)
 

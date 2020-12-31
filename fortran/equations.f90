@@ -2779,7 +2779,11 @@
             if (associated(EV%CustomSources)) then
                 select type(DE=>State%CP%DarkEnergy)
                 class is (TDarkEnergyEqnOfState)
-                    cs2_de = DE%cs2_lam
+                    if (DE%use_tabulated_cs2) then
+                      cs2_de = DE%cs2_de(a)
+                    else
+                      cs2_de = DE%cs2_lam
+                    end if
                 class default
                     cs2_de=1
                 end select

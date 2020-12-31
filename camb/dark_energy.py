@@ -33,10 +33,14 @@ class DarkEnergyEqnOfState(DarkEnergyModel):
         ("wa", c_double, "-dw/da(0)"),
         ("cs2", c_double, "fluid rest-frame sound speed squared"),
         ("use_tabulated_w", c_bool, "using an interpolated tabulated w(a) rather than w, wa above"),
+        ("use_tabulated_cs2", c_bool, "using an interpolated tabulated cs2(a) rather than cs2 above"),
         ("__no_perturbations", c_bool, "turn off perturbations (unphysical, so hidden in Python)")
     ]
 
-    _methods_ = [('SetWTable', [numpy_1d, numpy_1d, POINTER(c_int)])]
+    _methods_ = [
+        ('SetWTable', [numpy_1d, numpy_1d, POINTER(c_int)]),
+        ('SetCs2Table', [numpy_1d, numpy_1d, POINTER(c_int)])
+    ]
 
     def set_params(self, w=-1.0, wa=0, cs2=1.0):
         """
@@ -65,6 +69,22 @@ class DarkEnergyEqnOfState(DarkEnergyModel):
             raise ValueError('Dark energy w(a) arrays must end at a=1')
 
         self.f_SetWTable(a, w, byref(c_int(len(a))))
+        return self
+
+    def set_cs2_a_table(self, a, cs2):
+        """
+        Set cs2(a) from numerical values (used as cublic spline). Note this is quite slow.
+
+        :param a: array of scale factors
+        :param cs2: array of cs2(a)
+        :return: self
+        """
+        if len(a) != len(cs2):
+            raise ValueError('Dark energy cs2(a) table non-equal sized arrays')
+        if not np.isclose(a[-1], 1):
+            raise ValueError('Dark energy cs2(a) arrays must end at a=1')
+
+        self.f_SetCs2Table(a, cs2, byref(c_int(len(a))))
         return self
 
 
