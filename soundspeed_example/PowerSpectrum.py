@@ -77,8 +77,8 @@ kess.set_matter_power(redshifts=redshifts, kmax=kmax)
 
 resultsk = camb.get_results(kess)
 powersk =resultsk.get_cmb_power_spectra(kess, CMB_unit='muK')
-rho0 = resultsk.get_background_densities(wkdata[:,0], vars=['de', 'tot'])
-khk, zk, pkk = results0.get_linear_matter_power_spectrum(var1=7,var2=7)
+rhok = resultsk.get_background_densities(wkdata[:,0], vars=['de', 'tot'])
+khk, zk, pkk = resultsk.get_linear_matter_power_spectrum(var1=7,var2=7)
 Clk = powersk['total'][2:,0]
 
 #PLOTS ------------------------------------------------------------------------------------
