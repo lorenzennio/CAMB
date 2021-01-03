@@ -129,8 +129,6 @@
 
     if (this%use_tabulated_cs2) then
       cs2 = this%cs2_de(a)
-      !print *, this%cs2_de(a)
-      !error stop 'HI (:'
     else
       cs2 = this%cs2_lam
     end if
